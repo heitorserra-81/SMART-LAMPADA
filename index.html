@@ -115,8 +115,26 @@
     color:var(--muted);font-size:16px;padding:6px;
   }
 
-  .credit{
-    position:absolute;bottom:14px;font-size:10px;color:#4c4763;letter-spacing:.03em;
+  .credit-badge{
+    position:absolute;bottom:16px;left:50%;transform:translateX(-50%);
+    padding:9px 18px;border-radius:999px;
+    background:rgba(255,255,255,.03);
+    border:1px solid rgba(255,180,84,.18);
+    overflow:hidden;isolation:isolate;
+  }
+  .credit-badge::before{
+    content:"";position:absolute;inset:-2px;z-index:-1;border-radius:999px;
+    background:conic-gradient(from 0deg, transparent 0deg, transparent 260deg, var(--amber-glow) 300deg, var(--amber) 330deg, transparent 360deg);
+    animation:orbit 3.2s linear infinite;
+  }
+  .credit-badge::after{
+    content:"";position:absolute;inset:1px;z-index:-1;border-radius:999px;
+    background:var(--bg2);
+  }
+  @keyframes orbit{ to{ transform:rotate(360deg); } }
+  .credit-badge span{
+    font-size:10.5px;color:#c8c2dc;letter-spacing:.03em;font-weight:600;
+    position:relative;z-index:1;
   }
 
   .modal-bg{
@@ -160,7 +178,7 @@
     <button class="chip" id="btnOff">Desligar</button>
   </div>
 
-  <div class="credit">Desenvolvido por Heitor Serra Neto</div>
+  <div class="credit-badge"><span>Desenvolvido por Heitor Serra Neto</span></div>
 </div>
 
 <div class="install-banner" id="installBanner">
@@ -215,18 +233,30 @@ async function getToken(){
   const signStr = CLIENT_ID + t + stringToSign;
   const sign = await hmacSha256Hex(CLIENT_SECRET, signStr);
 
-  const res = await fetch(TUYA_HOST + url, {
-    method,
-    headers:{
-      "client_id": CLIENT_ID,
-      "sign": sign,
-      "t": t,
-      "sign_method": "HMAC-SHA256",
-      "Content-Type": "application/json"
-    }
-  });
-  const data = await res.json();
-  if(!data.success) throw new Error(data.msg || "Falha ao obter token");
+  let res;
+  try{
+    res = await fetch(TUYA_HOST + url, {
+      method,
+      headers:{
+        "client_id": CLIENT_ID,
+        "sign": sign,
+        "t": t,
+        "sign_method": "HMAC-SHA256",
+        "Content-Type": "application/json"
+      }
+    });
+  }catch(networkErr){
+    const e = new Error("[TOKEN/REDE] " + networkErr.message + " — provável bloqueio CORS do navegador.");
+    e.diag = "cors";
+    throw e;
+  }
+  let data;
+  try{
+    data = await res.json();
+  }catch(parseErr){
+    throw new Error(`[TOKEN/RESPOSTA] HTTP ${res.status} — resposta não é JSON válido.`);
+  }
+  if(!data.success) throw new Error(`[TOKEN/TUYA] ${data.code || '?'}: ${data.msg || 'Falha ao obter token'}`);
   cachedToken = data.result.access_token;
   cachedTokenExpiry = Date.now() + (data.result.expire_time - 60) * 1000;
   return cachedToken;
@@ -241,19 +271,30 @@ async function signedRequest(method, url, bodyObj){
   const signStr = CLIENT_ID + token + t + stringToSign;
   const sign = await hmacSha256Hex(CLIENT_SECRET, signStr);
 
-  const res = await fetch(TUYA_HOST + url, {
-    method,
-    headers:{
-      "client_id": CLIENT_ID,
-      "access_token": token,
-      "sign": sign,
-      "t": t,
-      "sign_method": "HMAC-SHA256",
-      "Content-Type": "application/json"
-    },
-    body: bodyStr || undefined
-  });
-  return res.json();
+  let res;
+  try{
+    res = await fetch(TUYA_HOST + url, {
+      method,
+      headers:{
+        "client_id": CLIENT_ID,
+        "access_token": token,
+        "sign": sign,
+        "t": t,
+        "sign_method": "HMAC-SHA256",
+        "Content-Type": "application/json"
+      },
+      body: bodyStr || undefined
+    });
+  }catch(networkErr){
+    const e = new Error("[COMANDO/REDE] " + networkErr.message + " — provável bloqueio CORS do navegador.");
+    e.diag = "cors";
+    throw e;
+  }
+  try{
+    return await res.json();
+  }catch(parseErr){
+    throw new Error(`[COMANDO/RESPOSTA] HTTP ${res.status} — resposta não é JSON válido.`);
+  }
 }
 
 async function getStatus(){
@@ -337,10 +378,7 @@ async function toggle(forceValue){
 
 function traduzErro(msg){
   if(!msg) return 'Não foi possível falar com a lâmpada.';
-  if(msg.toLowerCase().includes('fetch') || msg.toLowerCase().includes('failed')){
-    return 'Sem resposta da nuvem Tuya (rede ou bloqueio do navegador).';
-  }
-  return msg;
+  return msg; // mostra o erro real e específico, com a etapa marcada entre colchetes
 }
 
 async function refresh(){
