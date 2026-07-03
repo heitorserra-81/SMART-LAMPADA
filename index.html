@@ -200,115 +200,33 @@
 </div>
 
 <script>
-/* ===================== Config Tuya ===================== */
-const TUYA_HOST = "https://openapi.tuyaus.com";
-const CLIENT_ID = "thsackr5ftx4ddv955cs";
-const CLIENT_SECRET = "8916dccb7c16459a945c6224503a751c";
-const DEVICE_ID = "eb3bbf60c0abeb28a5jqmr";
+/* ===================== Config ===================== */
+const BRIDGE_URL = "https://script.google.com/macros/s/AKfycbwTCzI2lzAkWU_d3huLbiJlJ2cGMEC9oeeuVjWfU9e9JT7y-lo08F8C8tQYPF0BL56e/exec";
 const SWITCH_CODE = "switch_led";
 
-/* ===================== Crypto helpers ===================== */
-async function sha256Hex(str){
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
-}
-async function hmacSha256Hex(secret, str){
-  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), {name:'HMAC',hash:'SHA-256'}, false, ['sign']);
-  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(str));
-  return [...new Uint8Array(sig)].map(b=>b.toString(16).padStart(2,'0')).join('').toUpperCase();
-}
-function nowMs(){ return Date.now().toString(); }
-
-/* ===================== Tuya API ===================== */
-let cachedToken = null;
-let cachedTokenExpiry = 0;
-
-async function getToken(){
-  if(cachedToken && Date.now() < cachedTokenExpiry) return cachedToken;
-  const method = "GET";
-  const url = "/v1.0/token?grant_type=1";
-  const t = nowMs();
-  const emptyHash = await sha256Hex("");
-  const stringToSign = [method, emptyHash, "", url].join("\n");
-  const signStr = CLIENT_ID + t + stringToSign;
-  const sign = await hmacSha256Hex(CLIENT_SECRET, signStr);
-
-  let res;
-  try{
-    res = await fetch(TUYA_HOST + url, {
-      method,
-      headers:{
-        "client_id": CLIENT_ID,
-        "sign": sign,
-        "t": t,
-        "sign_method": "HMAC-SHA256",
-        "Content-Type": "application/json"
-      }
-    });
-  }catch(networkErr){
-    const e = new Error("[TOKEN/REDE] " + networkErr.message + " — provável bloqueio CORS do navegador.");
-    e.diag = "cors";
-    throw e;
-  }
-  let data;
-  try{
-    data = await res.json();
-  }catch(parseErr){
-    throw new Error(`[TOKEN/RESPOSTA] HTTP ${res.status} — resposta não é JSON válido.`);
-  }
-  if(!data.success) throw new Error(`[TOKEN/TUYA] ${data.code || '?'}: ${data.msg || 'Falha ao obter token'}`);
-  cachedToken = data.result.access_token;
-  cachedTokenExpiry = Date.now() + (data.result.expire_time - 60) * 1000;
-  return cachedToken;
-}
-
-async function signedRequest(method, url, bodyObj){
-  const token = await getToken();
-  const t = nowMs();
-  const bodyStr = bodyObj ? JSON.stringify(bodyObj) : "";
-  const bodyHash = await sha256Hex(bodyStr);
-  const stringToSign = [method, bodyHash, "", url].join("\n");
-  const signStr = CLIENT_ID + token + t + stringToSign;
-  const sign = await hmacSha256Hex(CLIENT_SECRET, signStr);
-
-  let res;
-  try{
-    res = await fetch(TUYA_HOST + url, {
-      method,
-      headers:{
-        "client_id": CLIENT_ID,
-        "access_token": token,
-        "sign": sign,
-        "t": t,
-        "sign_method": "HMAC-SHA256",
-        "Content-Type": "application/json"
-      },
-      body: bodyStr || undefined
-    });
-  }catch(networkErr){
-    const e = new Error("[COMANDO/REDE] " + networkErr.message + " — provável bloqueio CORS do navegador.");
-    e.diag = "cors";
-    throw e;
-  }
-  try{
-    return await res.json();
-  }catch(parseErr){
-    throw new Error(`[COMANDO/RESPOSTA] HTTP ${res.status} — resposta não é JSON válido.`);
-  }
-}
-
+/* ===================== Ponte (Google Apps Script) ===================== */
 async function getStatus(){
-  const url = `/v1.0/iot-03/devices/${DEVICE_ID}/status`;
-  const data = await signedRequest("GET", url);
-  if(!data.success) throw new Error(data.msg || "Falha ao consultar status");
+  let res;
+  try{
+    res = await fetch(BRIDGE_URL + "?action=status");
+  }catch(networkErr){
+    throw new Error("[STATUS/REDE] " + networkErr.message);
+  }
+  const data = await res.json();
+  if(!data.success) throw new Error(`[STATUS/TUYA] ${data.code || data.error || '?'}: ${data.msg || 'Falha ao consultar status'}`);
   const item = data.result.find(s => s.code === SWITCH_CODE);
   return item ? !!item.value : null;
 }
 
 async function setSwitch(value){
-  const url = `/v1.0/iot-03/devices/${DEVICE_ID}/commands`;
-  const data = await signedRequest("POST", url, { commands:[{ code: SWITCH_CODE, value }] });
-  if(!data.success) throw new Error(data.msg || "Falha ao enviar comando");
+  let res;
+  try{
+    res = await fetch(BRIDGE_URL + "?action=" + (value ? "on" : "off"));
+  }catch(networkErr){
+    throw new Error("[COMANDO/REDE] " + networkErr.message);
+  }
+  const data = await res.json();
+  if(!data.success) throw new Error(`[COMANDO/TUYA] ${data.code || data.error || '?'}: ${data.msg || 'Falha ao enviar comando'}`);
   return true;
 }
 
