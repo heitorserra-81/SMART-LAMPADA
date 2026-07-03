@@ -41,10 +41,27 @@
     font-size:22px;margin:0 0 34px;font-weight:600;color:var(--ink);
     text-align:center;
   }
+  .footer-credit{
+    position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+  }
+  .footer-credit .label{font-size:10px;color:var(--muted);letter-spacing:.03em;}
   .bulb-stage{
-    position:relative;width:220px;height:220px;
+    position:relative;width:280px;height:280px;
     display:flex;align-items:center;justify-content:center;
-    margin-bottom:36px;
+    margin-bottom:24px;touch-action:none;
+  }
+  .ring-svg{position:absolute;inset:0;width:280px;height:280px;transform:rotate(-90deg);pointer-events:none;}
+  .ring-track{fill:none;stroke:rgba(255,255,255,.06);stroke-width:10;}
+  .ring-fill{fill:none;stroke:var(--amber);stroke-width:10;stroke-linecap:round;transition:stroke .3s ease;}
+  .ring-handle{
+    position:absolute;width:20px;height:20px;border-radius:50%;
+    background:var(--amber-glow);box-shadow:0 0 10px var(--amber);
+    transform:translate(-50%,-50%);pointer-events:none;
+  }
+  .bright-label{
+    position:absolute;top:-2px;left:50%;transform:translateX(-50%);
+    font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.02em;
   }
   .glow{
     position:absolute;width:220px;height:220px;border-radius:50%;
@@ -87,13 +104,31 @@
   }
   @keyframes spin{to{transform:rotate(360deg);}}
 
-  .toggle-row{display:flex;gap:14px;margin-top:30px;}
+  .toggle-row{display:flex;gap:14px;margin-top:6px;margin-bottom:28px;}
   .chip{
     padding:10px 18px;border-radius:999px;font-size:13px;font-weight:600;
     border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);
     color:var(--ink);cursor:pointer;
   }
   .chip.active{background:var(--amber);color:#1c1408;border-color:var(--amber);}
+
+  .section-label{
+    font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+    font-weight:700;margin:4px 0 12px;text-align:center;
+  }
+  .swatch-row{
+    display:flex;gap:12px;flex-wrap:wrap;justify-content:center;
+    max-width:300px;margin-bottom:30px;
+  }
+  .swatch{
+    width:38px;height:38px;border-radius:50%;
+    border:2px solid rgba(255,255,255,.15);cursor:pointer;
+    position:relative;transition:transform .15s ease, border-color .2s ease;
+  }
+  .swatch:active{transform:scale(.9);}
+  .swatch.active{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.25);}
+  .swatch.warm{background:linear-gradient(160deg,#ffd699,#ff9d42);}
+  .swatch.cool{background:linear-gradient(160deg,#eaf3ff,#a9c9ff);}
 
   .install-banner{
     position:fixed;left:0;right:0;bottom:0;
@@ -116,7 +151,7 @@
   }
 
   .credit-badge{
-    position:absolute;bottom:16px;left:50%;transform:translateX(-50%);
+    position:relative;
     padding:9px 18px;border-radius:999px;
     background:rgba(255,255,255,.03);
     border:1px solid rgba(255,180,84,.18);
@@ -156,11 +191,18 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="eyebrow">Corrida Já · Casa</div>
-  <h1>Lâmpada Bulbo A60</h1>
+  <div class="eyebrow">Aplicativo</div>
+  <h1>Lâmpada</h1>
 
-  <div class="bulb-stage">
+  <div class="bulb-stage" id="bulbStage">
     <div class="glow" id="glow"></div>
+    <svg class="ring-svg" viewBox="0 0 280 280">
+      <circle class="ring-track" cx="140" cy="140" r="130"/>
+      <circle class="ring-fill" id="ringFill" cx="140" cy="140" r="130"
+        stroke-dasharray="816.8" stroke-dashoffset="816.8"/>
+    </svg>
+    <div class="ring-handle" id="ringHandle"></div>
+    <span class="bright-label" id="brightLabel"></span>
     <button class="bulb" id="bulbBtn" aria-label="Alternar lâmpada">
       <svg viewBox="0 0 24 24" fill="none">
         <path class="filament" id="bulbIcon" d="M12 2a7 7 0 0 0-4 12.74V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.26A7 7 0 0 0 12 2Z"
@@ -178,7 +220,24 @@
     <button class="chip" id="btnOff">Desligar</button>
   </div>
 
-  <div class="credit-badge"><span>Desenvolvido por Heitor Serra Neto</span></div>
+  <div class="section-label">Cor</div>
+  <div class="swatch-row" id="swatchRow">
+    <div class="swatch warm" data-type="white" data-temp="0" title="Quente"></div>
+    <div class="swatch cool" data-type="white" data-temp="1000" title="Fria"></div>
+    <div class="swatch" data-type="color" data-h="0" style="background:hsl(0,100%,50%)" title="Vermelho"></div>
+    <div class="swatch" data-type="color" data-h="30" style="background:hsl(30,100%,50%)" title="Laranja"></div>
+    <div class="swatch" data-type="color" data-h="60" style="background:hsl(60,100%,50%)" title="Amarelo"></div>
+    <div class="swatch" data-type="color" data-h="120" style="background:hsl(120,100%,40%)" title="Verde"></div>
+    <div class="swatch" data-type="color" data-h="190" style="background:hsl(190,100%,45%)" title="Ciano"></div>
+    <div class="swatch" data-type="color" data-h="240" style="background:hsl(240,100%,55%)" title="Azul"></div>
+    <div class="swatch" data-type="color" data-h="280" style="background:hsl(280,100%,55%)" title="Roxo"></div>
+    <div class="swatch" data-type="color" data-h="320" style="background:hsl(320,100%,55%)" title="Rosa"></div>
+  </div>
+
+  <div class="footer-credit">
+    <span class="label">Desenvolvido por</span>
+    <div class="credit-badge"><span>Heitor Serra Neto</span></div>
+  </div>
 </div>
 
 <div class="install-banner" id="installBanner">
@@ -214,8 +273,13 @@ async function getStatus(){
   }
   const data = await res.json();
   if(!data.success) throw new Error(`[STATUS/TUYA] ${data.code || data.error || '?'}: ${data.msg || 'Falha ao consultar status'}`);
-  const item = data.result.find(s => s.code === SWITCH_CODE);
-  return item ? !!item.value : null;
+  const items = data.result;
+  const switchItem = items.find(s => s.code === SWITCH_CODE);
+  const brightItem = items.find(s => s.code === 'bright_value_v2');
+  return {
+    switch: switchItem ? !!switchItem.value : null,
+    bright: brightItem ? brightItem.value : null
+  };
 }
 
 async function setSwitch(value){
@@ -230,6 +294,42 @@ async function setSwitch(value){
   return true;
 }
 
+async function setBrightness(value1000){
+  let res;
+  try{
+    res = await fetch(BRIDGE_URL + "?action=bright&value=" + Math.round(value1000));
+  }catch(networkErr){
+    throw new Error("[BRILHO/REDE] " + networkErr.message);
+  }
+  const data = await res.json();
+  if(!data.success) throw new Error(`[BRILHO/TUYA] ${data.code || data.error || '?'}: ${data.msg || 'Falha ao ajustar brilho'}`);
+  return true;
+}
+
+async function setColor(h){
+  let res;
+  try{
+    res = await fetch(BRIDGE_URL + `?action=color&h=${Math.round(h)}&s=1000&v=1000`);
+  }catch(networkErr){
+    throw new Error("[COR/REDE] " + networkErr.message);
+  }
+  const data = await res.json();
+  if(!data.success) throw new Error(`[COR/TUYA] ${data.code || data.error || '?'}: ${data.msg || 'Falha ao ajustar cor'}`);
+  return true;
+}
+
+async function setWhiteTemp(temp){
+  let res;
+  try{
+    res = await fetch(BRIDGE_URL + "?action=white&temp=" + Math.round(temp));
+  }catch(networkErr){
+    throw new Error("[TEMP/REDE] " + networkErr.message);
+  }
+  const data = await res.json();
+  if(!data.success) throw new Error(`[TEMP/TUYA] ${data.code || data.error || '?'}: ${data.msg || 'Falha ao ajustar temperatura'}`);
+  return true;
+}
+
 /* ===================== UI ===================== */
 const bulbBtn = document.getElementById('bulbBtn');
 const bulbIcon = document.getElementById('bulbIcon');
@@ -239,6 +339,14 @@ const statusText = document.getElementById('statusText');
 const hintText = document.getElementById('hintText');
 const btnOn = document.getElementById('btnOn');
 const btnOff = document.getElementById('btnOff');
+const bulbStage = document.getElementById('bulbStage');
+const ringFill = document.getElementById('ringFill');
+const ringHandle = document.getElementById('ringHandle');
+const brightLabel = document.getElementById('brightLabel');
+const swatchRow = document.getElementById('swatchRow');
+
+const RING_R = 130;
+const RING_CIRC = 2 * Math.PI * RING_R;
 
 let currentState = null;
 let busy = false;
@@ -302,8 +410,9 @@ function traduzErro(msg){
 async function refresh(){
   renderLoading('Consultando…');
   try{
-    const state = await getStatus();
-    renderState(state);
+    const st = await getStatus();
+    renderState(st.switch);
+    if(st.bright !== null) setRingPercent(Math.round((st.bright - 10) / 990 * 100));
   }catch(e){
     renderError(traduzErro(e.message));
   }
@@ -314,6 +423,92 @@ btnOn.addEventListener('click', () => toggle(true));
 btnOff.addEventListener('click', () => toggle(false));
 
 refresh();
+
+/* ===================== Anel de brilho (arraste circular) ===================== */
+let ringDragging = false;
+let ringSendTimer = null;
+
+function setRingPercent(pct){
+  pct = Math.max(0, Math.min(100, pct));
+  const offset = RING_CIRC * (1 - pct / 100);
+  ringFill.setAttribute('stroke-dashoffset', offset.toString());
+  const angle = (pct / 100) * 360 - 90; // -90 para iniciar no topo
+  const rad = angle * Math.PI / 180;
+  const cx = 140 + RING_R * Math.cos(rad);
+  const cy = 140 + RING_R * Math.sin(rad);
+  ringHandle.style.left = cx + 'px';
+  ringHandle.style.top = cy + 'px';
+  brightLabel.textContent = pct + '%';
+}
+
+function angleToPercent(clientX, clientY){
+  const rect = bulbStage.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  let angle = Math.atan2(clientY - cy, clientX - cx) * 180 / Math.PI + 90;
+  if(angle < 0) angle += 360;
+  return Math.round((angle / 360) * 100);
+}
+
+function sendBrightnessDebounced(pct){
+  clearTimeout(ringSendTimer);
+  ringSendTimer = setTimeout(async () => {
+    const value1000 = Math.round(10 + (pct / 100) * 990);
+    try{
+      renderLoading('Ajustando brilho…');
+      await setBrightness(value1000);
+      renderState(true, {keepHint:true});
+      hintText.textContent = '';
+    }catch(e){
+      renderError(traduzErro(e.message));
+    }
+  }, 250);
+}
+
+function onRingStart(clientX, clientY){
+  ringDragging = true;
+  const pct = angleToPercent(clientX, clientY);
+  setRingPercent(pct);
+}
+function onRingMove(clientX, clientY){
+  if(!ringDragging) return;
+  const pct = angleToPercent(clientX, clientY);
+  setRingPercent(pct);
+  sendBrightnessDebounced(pct);
+}
+function onRingEnd(){
+  ringDragging = false;
+}
+
+bulbStage.addEventListener('pointerdown', (ev) => {
+  if(ev.target === bulbBtn || bulbBtn.contains(ev.target)) return; // não intercepta o toque no bulbo
+  bulbStage.setPointerCapture(ev.pointerId);
+  onRingStart(ev.clientX, ev.clientY);
+});
+bulbStage.addEventListener('pointermove', (ev) => onRingMove(ev.clientX, ev.clientY));
+bulbStage.addEventListener('pointerup', onRingEnd);
+bulbStage.addEventListener('pointercancel', onRingEnd);
+
+/* ===================== Cores (swatches) ===================== */
+swatchRow.addEventListener('click', async (ev) => {
+  const el = ev.target.closest('.swatch');
+  if(!el) return;
+  [...swatchRow.children].forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  const type = el.dataset.type;
+  renderLoading('Aplicando cor…');
+  try{
+    if(type === 'white'){
+      await setWhiteTemp(Number(el.dataset.temp));
+    } else {
+      await setColor(Number(el.dataset.h));
+    }
+    renderState(true, {keepHint:true});
+    hintText.textContent = '';
+  }catch(e){
+    renderError(traduzErro(e.message));
+  }
+});
 
 /* ===================== Instalação PWA (iOS) ===================== */
 const isStandalone = window.navigator.standalone === true;
