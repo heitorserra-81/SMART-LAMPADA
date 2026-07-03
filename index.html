@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0b0b14">
+<title>Acender Luz</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%A1%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#0b0b14;
+    --bg2:#14121f;
+    --amber:#ffb454;
+    --amber-glow:#ffcf7a;
+    --ink:#f4efe6;
+    --muted:#8d87a3;
+    --danger:#ff6b6b;
+    --ok:#7ee29a;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0;height:100%;
+    background:radial-gradient(120% 120% at 50% -10%, #241f36 0%, var(--bg) 55%);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    overflow-x:hidden;
+  }
+  .wrap{
+    min-height:100%;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:32px 20px 90px;
+    position:relative;
+  }
+  .eyebrow{
+    letter-spacing:.28em;text-transform:uppercase;font-size:11px;
+    color:var(--muted);margin-bottom:10px;font-weight:600;
+  }
+  h1{
+    font-size:22px;margin:0 0 34px;font-weight:600;color:var(--ink);
+    text-align:center;
+  }
+  .bulb-stage{
+    position:relative;width:220px;height:220px;
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:36px;
+  }
+  .glow{
+    position:absolute;width:220px;height:220px;border-radius:50%;
+    background:radial-gradient(circle, var(--amber-glow) 0%, rgba(255,180,84,.35) 40%, rgba(255,180,84,0) 72%);
+    opacity:0;transition:opacity .5s ease;filter:blur(2px);
+  }
+  .glow.on{opacity:1;animation:pulse 2.6s ease-in-out infinite;}
+  @keyframes pulse{
+    0%,100%{transform:scale(1);opacity:.85;}
+    50%{transform:scale(1.08);opacity:1;}
+  }
+  button.bulb{
+    position:relative;z-index:2;width:150px;height:150px;border-radius:50%;
+    border:1px solid rgba(255,255,255,.08);
+    background:linear-gradient(160deg,#1c1a2b,#100e19);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;transition:transform .15s ease, box-shadow .3s ease, background .4s ease;
+    box-shadow:0 0 0 rgba(255,180,84,0);
+  }
+  button.bulb:active{transform:scale(.96);}
+  button.bulb.on{
+    background:linear-gradient(160deg,#3a2f1a,#241a0c);
+    box-shadow:0 0 60px 10px rgba(255,180,84,.35);
+  }
+  button.bulb svg{width:60px;height:60px;}
+  .filament{transition:stroke .4s ease, fill .4s ease;}
+  .status{
+    font-size:15px;font-weight:600;letter-spacing:.02em;color:var(--muted);
+    min-height:22px;margin-bottom:6px;display:flex;align-items:center;gap:8px;
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--muted);transition:background .3s ease;}
+  .dot.on{background:var(--ok);box-shadow:0 0 8px var(--ok);}
+  .dot.off{background:#5a5570;}
+  .dot.err{background:var(--danger);box-shadow:0 0 8px var(--danger);}
+  .hint{font-size:12px;color:var(--muted);text-align:center;max-width:280px;line-height:1.5;margin-top:2px;}
+  .spinner{
+    width:14px;height:14px;border-radius:50%;
+    border:2px solid rgba(244,239,230,.25);border-top-color:var(--ink);
+    animation:spin .7s linear infinite;display:inline-block;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .toggle-row{display:flex;gap:14px;margin-top:30px;}
+  .chip{
+    padding:10px 18px;border-radius:999px;font-size:13px;font-weight:600;
+    border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);
+    color:var(--ink);cursor:pointer;
+  }
+  .chip.active{background:var(--amber);color:#1c1408;border-color:var(--amber);}
+
+  .install-banner{
+    position:fixed;left:0;right:0;bottom:0;
+    background:#171522;border-top:1px solid rgba(255,255,255,.08);
+    padding:14px 18px calc(14px + env(safe-area-inset-bottom));
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    transform:translateY(120%);transition:transform .35s ease;
+    z-index:20;
+  }
+  .install-banner.show{transform:translateY(0);}
+  .install-banner p{margin:0;font-size:13px;color:var(--ink);line-height:1.4;}
+  .install-banner b{color:var(--amber);}
+  .install-banner button{
+    flex-shrink:0;background:var(--amber);color:#1c1408;border:none;
+    padding:9px 14px;border-radius:10px;font-weight:700;font-size:13px;
+  }
+  .install-close{
+    position:absolute;top:6px;right:10px;background:none;border:none;
+    color:var(--muted);font-size:16px;padding:6px;
+  }
+
+  .credit{
+    position:absolute;bottom:14px;font-size:10px;color:#4c4763;letter-spacing:.03em;
+  }
+
+  .modal-bg{
+    position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;
+    align-items:flex-end;justify-content:center;z-index:30;
+  }
+  .modal-bg.show{display:flex;}
+  .modal{
+    background:#171522;border-radius:20px 20px 0 0;padding:22px 22px calc(22px + env(safe-area-inset-bottom));
+    width:100%;max-width:480px;color:var(--ink);
+  }
+  .modal h3{margin:0 0 12px;font-size:16px;}
+  .modal ol{margin:0 0 16px;padding-left:20px;font-size:13px;line-height:1.8;color:#cfc9e0;}
+  .modal button{
+    width:100%;background:var(--amber);color:#1c1408;border:none;
+    padding:12px;border-radius:12px;font-weight:700;font-size:14px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Corrida Já · Casa</div>
+  <h1>Lâmpada Bulbo A60</h1>
+
+  <div class="bulb-stage">
+    <div class="glow" id="glow"></div>
+    <button class="bulb" id="bulbBtn" aria-label="Alternar lâmpada">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path class="filament" id="bulbIcon" d="M12 2a7 7 0 0 0-4 12.74V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.26A7 7 0 0 0 12 2Z"
+          stroke="#8d87a3" stroke-width="1.4" fill="none"/>
+        <path d="M10 22h4" stroke="#8d87a3" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="status"><span class="dot" id="statusDot"></span><span id="statusText">Toque para acender</span></div>
+  <div class="hint" id="hintText">Consulta o estado real da lâmpada ao abrir.</div>
+
+  <div class="toggle-row">
+    <button class="chip" id="btnOn">Ligar</button>
+    <button class="chip" id="btnOff">Desligar</button>
+  </div>
+
+  <div class="credit">Desenvolvido por Heitor Serra Neto</div>
+</div>
+
+<div class="install-banner" id="installBanner">
+  <button class="install-close" id="installClose">✕</button>
+  <p>Adicione à Tela de Início para abrir com <b>1 toque via Siri</b>.</p>
+  <button id="installBtn">Instalar</button>
+</div>
+
+<div class="modal-bg" id="installModal">
+  <div class="modal">
+    <h3>Adicionar à Tela de Início</h3>
+    <ol>
+      <li>Toque no ícone de compartilhar <b>[ ⬆︎ ]</b> na barra do Safari</li>
+      <li>Escolha <b>“Adicionar à Tela de Início”</b></li>
+      <li>Confirme em <b>“Adicionar”</b></li>
+    </ol>
+    <button id="modalClose">Entendi</button>
+  </div>
+</div>
+
+<script>
+/* ===================== Config Tuya ===================== */
+const TUYA_HOST = "https://openapi.tuyaus.com";
+const CLIENT_ID = "thsackr5ftx4ddv955cs";
+const CLIENT_SECRET = "8916dccb7c16459a945c6224503a751c";
+const DEVICE_ID = "eb3bbf60c0abeb28a5jqmr";
+const SWITCH_CODE = "switch_led";
+
+/* ===================== Crypto helpers ===================== */
+async function sha256Hex(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function hmacSha256Hex(secret, str){
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), {name:'HMAC',hash:'SHA-256'}, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(str));
+  return [...new Uint8Array(sig)].map(b=>b.toString(16).padStart(2,'0')).join('').toUpperCase();
+}
+function nowMs(){ return Date.now().toString(); }
+
+/* ===================== Tuya API ===================== */
+let cachedToken = null;
+let cachedTokenExpiry = 0;
+
+async function getToken(){
+  if(cachedToken && Date.now() < cachedTokenExpiry) return cachedToken;
+  const method = "GET";
+  const url = "/v1.0/token?grant_type=1";
+  const t = nowMs();
+  const emptyHash = await sha256Hex("");
+  const stringToSign = [method, emptyHash, "", url].join("\n");
+  const signStr = CLIENT_ID + t + stringToSign;
+  const sign = await hmacSha256Hex(CLIENT_SECRET, signStr);
+
+  const res = await fetch(TUYA_HOST + url, {
+    method,
+    headers:{
+      "client_id": CLIENT_ID,
+      "sign": sign,
+      "t": t,
+      "sign_method": "HMAC-SHA256",
+      "Content-Type": "application/json"
+    }
+  });
+  const data = await res.json();
+  if(!data.success) throw new Error(data.msg || "Falha ao obter token");
+  cachedToken = data.result.access_token;
+  cachedTokenExpiry = Date.now() + (data.result.expire_time - 60) * 1000;
+  return cachedToken;
+}
+
+async function signedRequest(method, url, bodyObj){
+  const token = await getToken();
+  const t = nowMs();
+  const bodyStr = bodyObj ? JSON.stringify(bodyObj) : "";
+  const bodyHash = await sha256Hex(bodyStr);
+  const stringToSign = [method, bodyHash, "", url].join("\n");
+  const signStr = CLIENT_ID + token + t + stringToSign;
+  const sign = await hmacSha256Hex(CLIENT_SECRET, signStr);
+
+  const res = await fetch(TUYA_HOST + url, {
+    method,
+    headers:{
+      "client_id": CLIENT_ID,
+      "access_token": token,
+      "sign": sign,
+      "t": t,
+      "sign_method": "HMAC-SHA256",
+      "Content-Type": "application/json"
+    },
+    body: bodyStr || undefined
+  });
+  return res.json();
+}
+
+async function getStatus(){
+  const url = `/v1.0/iot-03/devices/${DEVICE_ID}/status`;
+  const data = await signedRequest("GET", url);
+  if(!data.success) throw new Error(data.msg || "Falha ao consultar status");
+  const item = data.result.find(s => s.code === SWITCH_CODE);
+  return item ? !!item.value : null;
+}
+
+async function setSwitch(value){
+  const url = `/v1.0/iot-03/devices/${DEVICE_ID}/commands`;
+  const data = await signedRequest("POST", url, { commands:[{ code: SWITCH_CODE, value }] });
+  if(!data.success) throw new Error(data.msg || "Falha ao enviar comando");
+  return true;
+}
+
+/* ===================== UI ===================== */
+const bulbBtn = document.getElementById('bulbBtn');
+const bulbIcon = document.getElementById('bulbIcon');
+const glow = document.getElementById('glow');
+const statusDot = document.getElementById('statusDot');
+const statusText = document.getElementById('statusText');
+const hintText = document.getElementById('hintText');
+const btnOn = document.getElementById('btnOn');
+const btnOff = document.getElementById('btnOff');
+
+let currentState = null;
+let busy = false;
+
+function renderState(state, opts={}){
+  currentState = state;
+  if(state === true){
+    bulbBtn.classList.add('on');
+    glow.classList.add('on');
+    bulbIcon.setAttribute('stroke', '#ffcf7a');
+    bulbIcon.setAttribute('fill', 'rgba(255,180,84,.25)');
+    statusDot.className = 'dot on';
+    statusText.textContent = 'Acesa';
+    btnOn.classList.add('active'); btnOff.classList.remove('active');
+  } else if(state === false){
+    bulbBtn.classList.remove('on');
+    glow.classList.remove('on');
+    bulbIcon.setAttribute('stroke', '#8d87a3');
+    bulbIcon.setAttribute('fill', 'none');
+    statusDot.className = 'dot off';
+    statusText.textContent = 'Apagada';
+    btnOff.classList.add('active'); btnOn.classList.remove('active');
+  } else {
+    statusDot.className = 'dot';
+    statusText.textContent = 'Estado desconhecido';
+  }
+  if(!opts.keepHint) hintText.textContent = '';
+}
+
+function renderLoading(msg){
+  statusDot.className = 'dot';
+  statusText.innerHTML = `<span class="spinner"></span> ${msg}`;
+}
+
+function renderError(msg){
+  statusDot.className = 'dot err';
+  statusText.textContent = 'Erro';
+  hintText.textContent = msg;
+}
+
+async function toggle(forceValue){
+  if(busy) return;
+  busy = true;
+  const target = typeof forceValue === 'boolean' ? forceValue : !currentState;
+  renderLoading(target ? 'Acendendo…' : 'Apagando…');
+  try{
+    await setSwitch(target);
+    renderState(target);
+  }catch(e){
+    renderError(traduzErro(e.message));
+  }finally{
+    busy = false;
+  }
+}
+
+function traduzErro(msg){
+  if(!msg) return 'Não foi possível falar com a lâmpada.';
+  if(msg.toLowerCase().includes('fetch') || msg.toLowerCase().includes('failed')){
+    return 'Sem resposta da nuvem Tuya (rede ou bloqueio do navegador).';
+  }
+  return msg;
+}
+
+async function refresh(){
+  renderLoading('Consultando…');
+  try{
+    const state = await getStatus();
+    renderState(state);
+  }catch(e){
+    renderError(traduzErro(e.message));
+  }
+}
+
+bulbBtn.addEventListener('click', () => toggle());
+btnOn.addEventListener('click', () => toggle(true));
+btnOff.addEventListener('click', () => toggle(false));
+
+refresh();
+
+/* ===================== Instalação PWA (iOS) ===================== */
+const isStandalone = window.navigator.standalone === true;
+const banner = document.getElementById('installBanner');
+const installModal = document.getElementById('installModal');
+
+if(!isStandalone && !localStorage.getItem('installDismissed')){
+  setTimeout(()=> banner.classList.add('show'), 900);
+}
+document.getElementById('installBtn').addEventListener('click', ()=>{
+  installModal.classList.add('show');
+});
+document.getElementById('modalClose').addEventListener('click', ()=>{
+  installModal.classList.remove('show');
+});
+document.getElementById('installClose').addEventListener('click', ()=>{
+  banner.classList.remove('show');
+  localStorage.setItem('installDismissed','1');
+});
+
+/* ===================== Manifest dinâmico (instalável) ===================== */
+const manifest = {
+  name: "Acender Luz",
+  short_name: "Luz",
+  start_url: "./acender-luz.html",
+  display: "standalone",
+  background_color: "#0b0b14",
+  theme_color: "#0b0b14",
+  icons: [{
+    src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230b0b14'/%3E%3Ctext x='50' y='68' font-size='58' text-anchor='middle'%3E%F0%9F%92%A1%3C/text%3E%3C/svg%3E",
+    sizes: "192x192",
+    type: "image/svg+xml"
+  }]
+};
+const manifestBlob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+const manifestLink = document.createElement('link');
+manifestLink.rel = 'manifest';
+manifestLink.href = URL.createObjectURL(manifestBlob);
+document.head.appendChild(manifestLink);
+</script>
+</body>
+</html>
