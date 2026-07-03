@@ -6,331 +6,449 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0b0b14">
-<title>Acender Luz</title>
+<title>Lâmpada</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%A1%3C/text%3E%3C/svg%3E">
 <style>
   :root{
-    --bg:#0b0b14;
-    --bg2:#14121f;
-    --amber:#ffb454;
-    --amber-glow:#ffcf7a;
-    --ink:#f4efe6;
-    --muted:#8d87a3;
-    --danger:#ff6b6b;
-    --ok:#7ee29a;
+    --bg:#0b0b14; --bg2:#14121f;
+    --amber:#ffb454; --amber-glow:#ffcf7a;
+    --ink:#f4efe6; --muted:#8d87a3;
+    --danger:#ff6b6b; --ok:#7ee29a;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  html,body{
-    margin:0;height:100%;
-    background:radial-gradient(120% 120% at 50% -10%, #241f36 0%, var(--bg) 55%);
-    color:var(--ink);
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    overflow-x:hidden;
+    overflow-x:hidden;}
+  button{font-family:inherit;}
+
+  /* ---------- Fundo animado ---------- */
+  .bg{position:fixed;inset:0;z-index:0;overflow:hidden;
+    background:radial-gradient(130% 100% at 50% -10%, #241f36 0%, var(--bg) 55%);}
+  .bg-dot{position:absolute;width:6px;height:6px;border-radius:50%;
+    background:var(--amber-glow);box-shadow:0 0 10px 3px rgba(255,180,84,.55);
+    opacity:.15;animation:twinkle 3.4s ease-in-out infinite;}
+  @keyframes twinkle{
+    0%,100%{opacity:.1;transform:scale(.8);}
+    50%{opacity:.9;transform:scale(1.3);}
   }
-  .wrap{
-    min-height:100%;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    padding:32px 20px 90px;
-    position:relative;
-  }
-  .eyebrow{
-    letter-spacing:.28em;text-transform:uppercase;font-size:11px;
-    color:var(--muted);margin-bottom:10px;font-weight:600;
-  }
-  h1{
-    font-size:22px;margin:0 0 34px;font-weight:600;color:var(--ink);
-    text-align:center;
-  }
-  .footer-credit{
-    position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
-    display:flex;flex-direction:column;align-items:center;gap:6px;
-  }
-  .footer-credit .label{font-size:10px;color:var(--muted);letter-spacing:.03em;}
-  .bulb-stage{
-    position:relative;width:280px;height:280px;
-    display:flex;align-items:center;justify-content:center;
-    margin-bottom:24px;touch-action:none;
-  }
-  .ring-svg{position:absolute;inset:0;width:280px;height:280px;transform:rotate(-90deg);pointer-events:none;}
-  .ring-track{fill:none;stroke:rgba(255,255,255,.06);stroke-width:10;}
-  .ring-fill{fill:none;stroke:var(--amber);stroke-width:10;stroke-linecap:round;transition:stroke .3s ease;}
-  .ring-handle{
-    position:absolute;width:20px;height:20px;border-radius:50%;
-    background:var(--amber-glow);box-shadow:0 0 10px var(--amber);
-    transform:translate(-50%,-50%);pointer-events:none;
-  }
-  .bright-label{
-    position:absolute;top:-2px;left:50%;transform:translateX(-50%);
-    font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.02em;
-  }
-  .glow{
-    position:absolute;width:220px;height:220px;border-radius:50%;
+
+  .app{position:relative;z-index:1;min-height:100%;display:flex;flex-direction:column;}
+  .view{display:none;flex:1;padding:26px 20px 100px;flex-direction:column;align-items:center;}
+  .view.active{display:flex;}
+
+  .eyebrow{letter-spacing:.28em;text-transform:uppercase;font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:600;}
+  h1{font-size:24px;margin:0 0 26px;font-weight:700;color:var(--ink);text-align:center;}
+  h2{font-size:18px;margin:4px 0 18px;font-weight:700;color:var(--ink);}
+
+  /* ---------- Anel de brilho (arco, não fecha) ---------- */
+  .bulb-stage{position:relative;width:300px;height:300px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;touch-action:none;}
+  .ring-svg{position:absolute;inset:0;width:300px;height:300px;pointer-events:none;overflow:visible;}
+  .ring-track{fill:none;stroke:rgba(255,255,255,.07);stroke-width:16;stroke-linecap:round;}
+  .ring-fill{fill:none;stroke:var(--amber);stroke-width:16;stroke-linecap:round;filter:drop-shadow(0 0 6px rgba(255,180,84,.6));}
+  .ring-handle{position:absolute;width:24px;height:24px;border-radius:50%;background:var(--amber-glow);
+    box-shadow:0 0 12px var(--amber);transform:translate(-50%,-50%);pointer-events:none;border:3px solid #1c1408;}
+  .bright-label{position:absolute;top:14px;left:50%;transform:translateX(-50%);font-size:13px;color:var(--muted);font-weight:700;}
+
+  .glow{position:absolute;width:190px;height:190px;border-radius:50%;
     background:radial-gradient(circle, var(--amber-glow) 0%, rgba(255,180,84,.35) 40%, rgba(255,180,84,0) 72%);
-    opacity:0;transition:opacity .5s ease;filter:blur(2px);
-  }
+    opacity:0;transition:opacity .5s ease;filter:blur(2px);}
   .glow.on{opacity:1;animation:pulse 2.6s ease-in-out infinite;}
-  @keyframes pulse{
-    0%,100%{transform:scale(1);opacity:.85;}
-    50%{transform:scale(1.08);opacity:1;}
-  }
-  button.bulb{
-    position:relative;z-index:2;width:150px;height:150px;border-radius:50%;
-    border:1px solid rgba(255,255,255,.08);
-    background:linear-gradient(160deg,#1c1a2b,#100e19);
-    display:flex;align-items:center;justify-content:center;
-    cursor:pointer;transition:transform .15s ease, box-shadow .3s ease, background .4s ease;
-    box-shadow:0 0 0 rgba(255,180,84,0);
-  }
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:.85;}50%{transform:scale(1.08);opacity:1;}}
+
+  button.bulb{position:relative;z-index:2;width:140px;height:140px;border-radius:50%;
+    border:1px solid rgba(255,255,255,.08);background:linear-gradient(160deg,#1c1a2b,#100e19);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    transition:transform .15s ease, box-shadow .3s ease, background .4s ease;}
   button.bulb:active{transform:scale(.96);}
-  button.bulb.on{
-    background:linear-gradient(160deg,#3a2f1a,#241a0c);
-    box-shadow:0 0 60px 10px rgba(255,180,84,.35);
-  }
-  button.bulb svg{width:60px;height:60px;}
+  button.bulb.on{background:linear-gradient(160deg,#3a2f1a,#241a0c);box-shadow:0 0 60px 10px rgba(255,180,84,.35);}
+  button.bulb svg{width:56px;height:56px;}
   .filament{transition:stroke .4s ease, fill .4s ease;}
-  .status{
-    font-size:15px;font-weight:600;letter-spacing:.02em;color:var(--muted);
-    min-height:22px;margin-bottom:6px;display:flex;align-items:center;gap:8px;
-  }
+
+  .status{font-size:15px;font-weight:600;color:var(--muted);min-height:22px;margin-bottom:4px;display:flex;align-items:center;gap:8px;}
   .dot{width:7px;height:7px;border-radius:50%;background:var(--muted);transition:background .3s ease;}
   .dot.on{background:var(--ok);box-shadow:0 0 8px var(--ok);}
   .dot.off{background:#5a5570;}
   .dot.err{background:var(--danger);box-shadow:0 0 8px var(--danger);}
-  .hint{font-size:12px;color:var(--muted);text-align:center;max-width:280px;line-height:1.5;margin-top:2px;}
-  .spinner{
-    width:14px;height:14px;border-radius:50%;
-    border:2px solid rgba(244,239,230,.25);border-top-color:var(--ink);
-    animation:spin .7s linear infinite;display:inline-block;
-  }
+  .hint{font-size:12px;color:var(--muted);text-align:center;max-width:280px;line-height:1.5;margin-top:2px;min-height:16px;}
+  .spinner{width:14px;height:14px;border-radius:50%;border:2px solid rgba(244,239,230,.25);border-top-color:var(--ink);animation:spin .7s linear infinite;display:inline-block;}
   @keyframes spin{to{transform:rotate(360deg);}}
 
-  .toggle-row{display:flex;gap:14px;margin-top:6px;margin-bottom:28px;}
-  .chip{
-    padding:10px 18px;border-radius:999px;font-size:13px;font-weight:600;
-    border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);
-    color:var(--ink);cursor:pointer;
-  }
+  .toggle-row{display:flex;gap:14px;margin:18px 0 26px;}
+  .chip{padding:10px 20px;border-radius:999px;font-size:13px;font-weight:600;
+    border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:var(--ink);cursor:pointer;}
   .chip.active{background:var(--amber);color:#1c1408;border-color:var(--amber);}
 
-  .section-label{
-    font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
-    font-weight:700;margin:4px 0 12px;text-align:center;
-  }
-  .swatch-row{
-    display:flex;gap:12px;flex-wrap:wrap;justify-content:center;
-    max-width:300px;margin-bottom:30px;
-  }
-  .swatch{
-    width:38px;height:38px;border-radius:50%;
-    border:2px solid rgba(255,255,255,.15);cursor:pointer;
-    position:relative;transition:transform .15s ease, border-color .2s ease;
-  }
+  .section-label{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:6px 0 12px;text-align:center;}
+  .swatch-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;max-width:320px;margin-bottom:14px;}
+  .swatch{width:40px;height:40px;border-radius:50%;border:2px solid rgba(255,255,255,.15);cursor:pointer;transition:transform .15s ease, border-color .2s ease;}
   .swatch:active{transform:scale(.9);}
   .swatch.active{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.25);}
   .swatch.warm{background:linear-gradient(160deg,#ffd699,#ff9d42);}
   .swatch.cool{background:linear-gradient(160deg,#eaf3ff,#a9c9ff);}
 
-  .install-banner{
-    position:fixed;left:0;right:0;bottom:0;
-    background:#171522;border-top:1px solid rgba(255,255,255,.08);
-    padding:14px 18px calc(14px + env(safe-area-inset-bottom));
-    display:flex;align-items:center;justify-content:space-between;gap:12px;
-    transform:translateY(120%);transition:transform .35s ease;
-    z-index:20;
-  }
-  .install-banner.show{transform:translateY(0);}
-  .install-banner p{margin:0;font-size:13px;color:var(--ink);line-height:1.4;}
-  .install-banner b{color:var(--amber);}
-  .install-banner button{
-    flex-shrink:0;background:var(--amber);color:#1c1408;border:none;
-    padding:9px 14px;border-radius:10px;font-weight:700;font-size:13px;
-  }
-  .install-close{
-    position:absolute;top:6px;right:10px;background:none;border:none;
-    color:var(--muted);font-size:16px;padding:6px;
-  }
+  .btn-outline{padding:10px 18px;border-radius:12px;font-size:13px;font-weight:700;
+    border:1px solid rgba(255,180,84,.4);background:rgba(255,180,84,.08);color:var(--amber-glow);cursor:pointer;margin-bottom:26px;}
 
-  .credit-badge{
-    position:relative;
-    padding:9px 18px;border-radius:999px;
-    background:rgba(255,255,255,.03);
-    border:1px solid rgba(255,180,84,.18);
-    overflow:hidden;isolation:isolate;
-  }
-  .credit-badge::before{
-    content:"";position:absolute;inset:-2px;z-index:-1;border-radius:999px;
-    background:conic-gradient(from 0deg, transparent 0deg, transparent 260deg, var(--amber-glow) 300deg, var(--amber) 330deg, transparent 360deg);
-    animation:orbit 3.2s linear infinite;
-  }
-  .credit-badge::after{
-    content:"";position:absolute;inset:1px;z-index:-1;border-radius:999px;
-    background:var(--bg2);
-  }
-  @keyframes orbit{ to{ transform:rotate(360deg); } }
-  .credit-badge span{
-    font-size:10.5px;color:#c8c2dc;letter-spacing:.03em;font-weight:600;
-    position:relative;z-index:1;
-  }
-
-  .modal-bg{
-    position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;
-    align-items:flex-end;justify-content:center;z-index:30;
-  }
+  /* ---------- Modal paleta ---------- */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:flex-end;justify-content:center;z-index:40;}
   .modal-bg.show{display:flex;}
-  .modal{
-    background:#171522;border-radius:20px 20px 0 0;padding:22px 22px calc(22px + env(safe-area-inset-bottom));
-    width:100%;max-width:480px;color:var(--ink);
-  }
-  .modal h3{margin:0 0 12px;font-size:16px;}
-  .modal ol{margin:0 0 16px;padding-left:20px;font-size:13px;line-height:1.8;color:#cfc9e0;}
-  .modal button{
-    width:100%;background:var(--amber);color:#1c1408;border:none;
-    padding:12px;border-radius:12px;font-weight:700;font-size:14px;
-  }
+  .modal{background:#171522;border-radius:20px 20px 0 0;padding:22px 22px calc(22px + env(safe-area-inset-bottom));
+    width:100%;max-width:480px;color:var(--ink);max-height:80vh;overflow-y:auto;position:relative;}
+  .modal h3{margin:0 0 16px;font-size:16px;}
+  .hue-strip{width:100%;height:34px;border-radius:17px;margin-bottom:16px;
+    background:linear-gradient(to right, hsl(0,100%,50%),hsl(60,100%,50%),hsl(120,100%,50%),hsl(180,100%,50%),hsl(240,100%,50%),hsl(300,100%,50%),hsl(360,100%,50%));
+    position:relative;touch-action:none;}
+  .hue-thumb{position:absolute;top:50%;width:26px;height:26px;border-radius:50%;background:#fff;
+    border:3px solid #1c1408;transform:translate(-50%,-50%);box-shadow:0 0 6px rgba(0,0,0,.5);}
+  .modal-preview{width:100%;height:56px;border-radius:14px;margin-bottom:18px;transition:background .15s ease;}
+  .modal button.confirm{width:100%;background:var(--amber);color:#1c1408;border:none;padding:13px;border-radius:12px;font-weight:700;font-size:14px;}
+  .modal-close{position:absolute;top:14px;right:18px;background:none;border:none;color:var(--muted);font-size:18px;}
+
+  /* ---------- Cenas / Rotinas ---------- */
+  .card{width:100%;max-width:340px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);
+    border-radius:16px;padding:16px;margin-bottom:14px;}
+  .card-title{font-size:14px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+  .card-swatch{width:16px;height:16px;border-radius:50%;flex-shrink:0;}
+  .card-desc{font-size:12px;color:var(--muted);margin-bottom:12px;}
+  .card-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .card-actions button{padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;border:none;cursor:pointer;}
+  .btn-apply{background:var(--amber);color:#1c1408;}
+  .btn-copy{background:rgba(255,255,255,.08);color:var(--ink);}
+  .btn-del{background:rgba(255,107,107,.12);color:var(--danger);}
+
+  .form-box{width:100%;max-width:340px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);
+    border-radius:16px;padding:16px;margin-bottom:20px;}
+  .form-box label{font-size:12px;color:var(--muted);display:block;margin:10px 0 6px;}
+  .form-box input[type=text]{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);
+    background:rgba(255,255,255,.04);color:var(--ink);font-size:14px;}
+  .form-box input[type=range]{width:100%;}
+  .form-row-btns{display:flex;gap:10px;margin-top:6px;}
+  .mode-btn{flex:1;padding:9px;border-radius:10px;font-size:12px;font-weight:700;border:1px solid rgba(255,255,255,.12);
+    background:rgba(255,255,255,.04);color:var(--ink);cursor:pointer;}
+  .mode-btn.active{background:var(--amber);color:#1c1408;border-color:var(--amber);}
+  .btn-save{width:100%;margin-top:14px;background:var(--amber);color:#1c1408;border:none;padding:12px;border-radius:12px;font-weight:700;font-size:14px;}
+
+  .empty-msg{font-size:13px;color:var(--muted);text-align:center;margin:20px 0;max-width:280px;}
+
+  /* ---------- Ajustes ---------- */
+  .settings-block{width:100%;max-width:360px;margin-bottom:22px;}
+  .settings-block h3{font-size:13px;color:var(--amber-glow);margin:0 0 10px;font-weight:700;}
+  .link-row{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.03);
+    border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:9px 12px;margin-bottom:8px;}
+  .link-row span{flex:1;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .link-row button{flex-shrink:0;background:rgba(255,180,84,.15);color:var(--amber-glow);border:none;
+    padding:6px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;}
+  .steps{font-size:13px;color:#cfc9e0;line-height:1.9;padding-left:20px;margin:0;}
+  .steps b{color:var(--ink);}
+  .toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#2a2440;color:var(--ink);
+    padding:10px 18px;border-radius:999px;font-size:13px;font-weight:600;z-index:60;opacity:0;
+    transition:opacity .25s ease;pointer-events:none;}
+  .toast.show{opacity:1;}
+
+  /* ---------- Navegação inferior ---------- */
+  .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;
+    background:rgba(20,18,31,.92);backdrop-filter:blur(14px);
+    border-top:1px solid rgba(255,255,255,.08);
+    display:flex;padding:8px 6px calc(8px + env(safe-area-inset-bottom));}
+  .tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+    background:none;border:none;color:var(--muted);font-size:10px;font-weight:700;padding:6px 0;cursor:pointer;}
+  .tab-btn svg{width:20px;height:20px;}
+  .tab-btn.active{color:var(--amber);}
+
+  .footer-credit{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:auto;padding-top:20px;}
+  .footer-credit .label{font-size:10px;color:var(--muted);letter-spacing:.03em;}
+  .credit-badge{position:relative;padding:9px 18px;border-radius:999px;background:rgba(255,255,255,.03);
+    border:1px solid rgba(255,180,84,.18);overflow:hidden;isolation:isolate;}
+  .credit-badge::before{content:"";position:absolute;inset:-2px;z-index:-1;border-radius:999px;
+    background:conic-gradient(from 0deg, transparent 0deg, transparent 260deg, var(--amber-glow) 300deg, var(--amber) 330deg, transparent 360deg);
+    animation:orbit 3.2s linear infinite;}
+  .credit-badge::after{content:"";position:absolute;inset:1px;z-index:-1;border-radius:999px;background:var(--bg2);}
+  @keyframes orbit{to{transform:rotate(360deg);}}
+  .credit-badge span{font-size:10.5px;color:#c8c2dc;letter-spacing:.03em;font-weight:600;}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="eyebrow">Aplicativo</div>
-  <h1>Lâmpada</h1>
+<div class="bg" id="bgLayer"></div>
 
-  <div class="bulb-stage" id="bulbStage">
-    <div class="glow" id="glow"></div>
-    <svg class="ring-svg" viewBox="0 0 280 280">
-      <circle class="ring-track" cx="140" cy="140" r="130"/>
-      <circle class="ring-fill" id="ringFill" cx="140" cy="140" r="130"
-        stroke-dasharray="816.8" stroke-dashoffset="816.8"/>
-    </svg>
-    <div class="ring-handle" id="ringHandle"></div>
-    <span class="bright-label" id="brightLabel"></span>
-    <button class="bulb" id="bulbBtn" aria-label="Alternar lâmpada">
-      <svg viewBox="0 0 24 24" fill="none">
-        <path class="filament" id="bulbIcon" d="M12 2a7 7 0 0 0-4 12.74V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.26A7 7 0 0 0 12 2Z"
-          stroke="#8d87a3" stroke-width="1.4" fill="none"/>
-        <path d="M10 22h4" stroke="#8d87a3" stroke-width="1.4" stroke-linecap="round"/>
+<div class="app">
+
+  <!-- ===================== HOME ===================== -->
+  <div class="view active" id="view-home">
+    <div class="eyebrow">Aplicativo</div>
+    <h1>Lâmpada</h1>
+
+    <div class="bulb-stage" id="bulbStage">
+      <div class="glow" id="glow"></div>
+      <svg class="ring-svg" id="ringSvg" viewBox="0 0 300 300">
+        <path class="ring-track" id="ringTrack"/>
+        <path class="ring-fill" id="ringFill"/>
       </svg>
-    </button>
+      <div class="ring-handle" id="ringHandle"></div>
+      <span class="bright-label" id="brightLabel"></span>
+      <button class="bulb" id="bulbBtn" aria-label="Alternar lâmpada">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path class="filament" id="bulbIcon" d="M12 2a7 7 0 0 0-4 12.74V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.26A7 7 0 0 0 12 2Z"
+            stroke="#8d87a3" stroke-width="1.4" fill="none"/>
+          <path d="M10 22h4" stroke="#8d87a3" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="status"><span class="dot" id="statusDot"></span><span id="statusText">Toque para acender</span></div>
+    <div class="hint" id="hintText">Consulta o estado real da lâmpada ao abrir.</div>
+
+    <div class="toggle-row">
+      <button class="chip" id="btnOn">Ligar</button>
+      <button class="chip" id="btnOff">Desligar</button>
+    </div>
+
+    <div class="section-label">Cor</div>
+    <div class="swatch-row" id="swatchRow">
+      <div class="swatch warm" data-type="white" data-temp="0" title="Quente"></div>
+      <div class="swatch cool" data-type="white" data-temp="1000" title="Fria"></div>
+      <div class="swatch" data-type="color" data-h="0" style="background:hsl(0,100%,50%)" title="Vermelho"></div>
+      <div class="swatch" data-type="color" data-h="30" style="background:hsl(30,100%,50%)" title="Laranja"></div>
+      <div class="swatch" data-type="color" data-h="60" style="background:hsl(60,100%,50%)" title="Amarelo"></div>
+      <div class="swatch" data-type="color" data-h="120" style="background:hsl(120,100%,40%)" title="Verde"></div>
+      <div class="swatch" data-type="color" data-h="190" style="background:hsl(190,100%,45%)" title="Ciano"></div>
+      <div class="swatch" data-type="color" data-h="240" style="background:hsl(240,100%,55%)" title="Azul"></div>
+      <div class="swatch" data-type="color" data-h="280" style="background:hsl(280,100%,55%)" title="Roxo"></div>
+      <div class="swatch" data-type="color" data-h="320" style="background:hsl(320,100%,55%)" title="Rosa"></div>
+    </div>
+    <button class="btn-outline" id="openPalette">🎨 Abrir paleta de cores</button>
+
+    <div class="footer-credit">
+      <span class="label">Desenvolvido por</span>
+      <div class="credit-badge"><span>Heitor Serra Neto</span></div>
+    </div>
   </div>
 
-  <div class="status"><span class="dot" id="statusDot"></span><span id="statusText">Toque para acender</span></div>
-  <div class="hint" id="hintText">Consulta o estado real da lâmpada ao abrir.</div>
+  <!-- ===================== CENAS ===================== -->
+  <div class="view" id="view-scenes">
+    <div class="eyebrow">Aplicativo</div>
+    <h1>Cenas</h1>
 
-  <div class="toggle-row">
-    <button class="chip" id="btnOn">Ligar</button>
-    <button class="chip" id="btnOff">Desligar</button>
+    <div class="form-box">
+      <label>Nome da cena</label>
+      <input type="text" id="sceneName" placeholder="Ex: Cinema, Jantar, Foco">
+      <label>Modo</label>
+      <div class="form-row-btns">
+        <button class="mode-btn active" data-mode="colour" id="modeColorBtn">Cor</button>
+        <button class="mode-btn" data-mode="white" id="modeWhiteBtn">Branco</button>
+      </div>
+      <div id="sceneColorBlock">
+        <label>Matiz (cor)</label>
+        <input type="range" id="sceneHue" min="0" max="360" value="240">
+      </div>
+      <div id="sceneWhiteBlock" style="display:none;">
+        <label>Temperatura (quente ↔ fria)</label>
+        <input type="range" id="sceneTemp" min="0" max="1000" value="0">
+      </div>
+      <label>Brilho</label>
+      <input type="range" id="sceneBright" min="10" max="1000" value="700">
+      <button class="btn-save" id="saveSceneBtn">Salvar cena</button>
+    </div>
+
+    <div id="sceneList"></div>
+    <div class="empty-msg" id="sceneEmpty">Nenhuma cena criada ainda. Monte uma acima — combina cor (ou branco) com um nível de brilho, tudo aplicado de uma vez.</div>
   </div>
 
-  <div class="section-label">Cor</div>
-  <div class="swatch-row" id="swatchRow">
-    <div class="swatch warm" data-type="white" data-temp="0" title="Quente"></div>
-    <div class="swatch cool" data-type="white" data-temp="1000" title="Fria"></div>
-    <div class="swatch" data-type="color" data-h="0" style="background:hsl(0,100%,50%)" title="Vermelho"></div>
-    <div class="swatch" data-type="color" data-h="30" style="background:hsl(30,100%,50%)" title="Laranja"></div>
-    <div class="swatch" data-type="color" data-h="60" style="background:hsl(60,100%,50%)" title="Amarelo"></div>
-    <div class="swatch" data-type="color" data-h="120" style="background:hsl(120,100%,40%)" title="Verde"></div>
-    <div class="swatch" data-type="color" data-h="190" style="background:hsl(190,100%,45%)" title="Ciano"></div>
-    <div class="swatch" data-type="color" data-h="240" style="background:hsl(240,100%,55%)" title="Azul"></div>
-    <div class="swatch" data-type="color" data-h="280" style="background:hsl(280,100%,55%)" title="Roxo"></div>
-    <div class="swatch" data-type="color" data-h="320" style="background:hsl(320,100%,55%)" title="Rosa"></div>
+  <!-- ===================== ROTINAS ===================== -->
+  <div class="view" id="view-routines">
+    <div class="eyebrow">Aplicativo</div>
+    <h1>Rotinas</h1>
+    <div class="hint" style="margin-bottom:20px;max-width:320px;">
+      O app não fica rodando sozinho em segundo plano — quem dispara por horário ou chegada é o app <b>Atalhos</b> do iPhone, na aba "Automação". Aqui você pega o link certo de cada cena pra colar lá.
+    </div>
+
+    <div class="form-box" style="text-align:left;">
+      <b style="font-size:13px;">Como criar uma rotina automática:</b>
+      <ol class="steps" style="margin-top:10px;">
+        <li>Copia o link de uma cena abaixo (ou de Início/Ajustes)</li>
+        <li>Abre o app <b>Atalhos</b> → aba <b>Automação</b></li>
+        <li>Toca em <b>"+"</b> → "Criar Automação Pessoal"</li>
+        <li>Escolhe o gatilho: <b>Hora do Dia</b>, <b>Chegada</b>, etc.</li>
+        <li>Ação: <b>"Obter Conteúdo de URL"</b> → cola o link</li>
+        <li>Desativa <b>"Perguntar Antes de Executar"</b></li>
+      </ol>
+    </div>
+
+    <div class="section-label">Cenas disponíveis pra rotina</div>
+    <div id="routineList"></div>
+    <div class="empty-msg" id="routineEmpty">Crie cenas na aba "Cenas" primeiro — elas aparecem aqui prontas pra virar rotina.</div>
   </div>
 
-  <div class="footer-credit">
-    <span class="label">Desenvolvido por</span>
-    <div class="credit-badge"><span>Heitor Serra Neto</span></div>
+  <!-- ===================== AJUSTES ===================== -->
+  <div class="view" id="view-settings">
+    <div class="eyebrow">Aplicativo</div>
+    <h1>Ajustes</h1>
+
+    <div class="settings-block">
+      <h3>Links rápidos para Atalhos</h3>
+      <div id="quickLinks"></div>
+      <button class="btn-outline" id="copyAllBtn" style="width:100%;margin-top:4px;">📋 Copiar todos de uma vez</button>
+    </div>
+
+    <div class="settings-block">
+      <h3>Como criar um Atalho com um link</h3>
+      <ol class="steps">
+        <li>Copia o link desejado acima (toca em "Copiar")</li>
+        <li>Abre o app <b>Atalhos</b> → toca em <b>"+"</b></li>
+        <li><b>"Adicionar Ação"</b> → busca <b>"Obter Conteúdo de URL"</b></li>
+        <li>Toca no campo da URL → <b>Colar</b></li>
+        <li>Nos <b>"..."</b> no topo → dá um nome e ativa <b>"Usar com Siri"</b></li>
+        <li>Grava a frase que você quer falar</li>
+      </ol>
+    </div>
+
+    <div class="settings-block">
+      <h3>Um único comando de voz pra várias cores</h3>
+      <ol class="steps">
+        <li>Cria um Atalho novo, nome "Mudar cor da luz"</li>
+        <li>Adiciona ação <b>"Perguntar Entrada"</b> (texto)</li>
+        <li>Adiciona blocos <b>"Se"</b>: Entrada = "azul" → link azul; Entrada = "vermelho" → link vermelho; repete pra cada cor</li>
+        <li>Ativa <b>"Usar com Siri"</b>, frase: "mudar cor da luz"</li>
+        <li>Ao usar: "Ei Siri, mudar cor da luz" → ela pergunta → você fala a cor</li>
+      </ol>
+    </div>
+
+    <div class="footer-credit">
+      <span class="label">Desenvolvido por</span>
+      <div class="credit-badge"><span>Heitor Serra Neto</span></div>
+    </div>
   </div>
+
 </div>
 
-<div class="install-banner" id="installBanner">
-  <button class="install-close" id="installClose">✕</button>
-  <p>Adicione à Tela de Início para abrir com <b>1 toque via Siri</b>.</p>
-  <button id="installBtn">Instalar</button>
+<!-- ===================== Barra inferior ===================== -->
+<div class="tabbar">
+  <button class="tab-btn active" data-view="home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 0-4 12.74V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.26A7 7 0 0 0 12 2Z"/><path d="M10 22h4" stroke-linecap="round"/></svg>
+    Início
+  </button>
+  <button class="tab-btn" data-view="scenes">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+    Cenas
+  </button>
+  <button class="tab-btn" data-view="routines">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3" stroke-linecap="round"/></svg>
+    Rotinas
+  </button>
+  <button class="tab-btn" data-view="settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+    Ajustes
+  </button>
 </div>
 
-<div class="modal-bg" id="installModal">
+<!-- ===================== Modal paleta ===================== -->
+<div class="modal-bg" id="paletteModal">
   <div class="modal">
-    <h3>Adicionar à Tela de Início</h3>
-    <ol>
-      <li>Toque no ícone de compartilhar <b>[ ⬆︎ ]</b> na barra do Safari</li>
-      <li>Escolha <b>“Adicionar à Tela de Início”</b></li>
-      <li>Confirme em <b>“Adicionar”</b></li>
-    </ol>
-    <button id="modalClose">Entendi</button>
+    <button class="modal-close" id="paletteClose">✕</button>
+    <h3>Escolha uma cor</h3>
+    <div class="modal-preview" id="palettePreview" style="background:hsl(240,100%,55%);"></div>
+    <div class="hue-strip" id="hueStrip">
+      <div class="hue-thumb" id="hueThumb" style="left:66.6%;"></div>
+    </div>
+    <button class="confirm" id="paletteConfirm">Aplicar cor</button>
   </div>
 </div>
+
+<div class="toast" id="toast"></div>
 
 <script>
 /* ===================== Config ===================== */
 const BRIDGE_URL = "https://script.google.com/macros/s/AKfycbyAihJBQC1LgwwfNeZ4qQWop6RF2wLdRX3zZN8H0VT0rU55YudqDROil-rrlKUWDBs9/exec";
 const SWITCH_CODE = "switch_led";
 
+/* ===================== Fundo animado ===================== */
+(function initBg(){
+  const layer = document.getElementById('bgLayer');
+  const n = 16;
+  for(let i=0;i<n;i++){
+    const d = document.createElement('div');
+    d.className = 'bg-dot';
+    const edge = i % 4;
+    let x,y;
+    if(edge===0){ x = Math.random()*100; y = 2+Math.random()*4; }
+    else if(edge===1){ x = 96+Math.random()*3; y = Math.random()*100; }
+    else if(edge===2){ x = Math.random()*100; y = 94+Math.random()*4; }
+    else { x = 1+Math.random()*3; y = Math.random()*100; }
+    d.style.left = x + '%';
+    d.style.top = y + '%';
+    d.style.animationDelay = (i*0.35) + 's';
+    layer.appendChild(d);
+  }
+})();
+
 /* ===================== Ponte (Google Apps Script) ===================== */
-async function getStatus(){
+async function bridgeGet(qs){
   let res;
   try{
-    res = await fetch(BRIDGE_URL + "?action=status");
+    res = await fetch(BRIDGE_URL + qs);
   }catch(networkErr){
-    throw new Error("[STATUS/REDE] " + networkErr.message);
+    throw new Error("[REDE] " + networkErr.message);
   }
   const data = await res.json();
-  if(!data.success) throw new Error(`[STATUS/TUYA] ${data.code || data.error || '?'}: ${data.msg || 'Falha ao consultar status'}`);
+  if(!data.success) throw new Error(`[TUYA] ${data.code || data.error || '?'}: ${data.msg || 'Falha no comando'}`);
+  return data;
+}
+
+async function getStatus(){
+  const data = await bridgeGet("?action=status");
   const items = data.result;
   const switchItem = items.find(s => s.code === SWITCH_CODE);
   const brightItem = items.find(s => s.code === 'bright_value_v2');
-  return {
-    switch: switchItem ? !!switchItem.value : null,
-    bright: brightItem ? brightItem.value : null
-  };
+  return { switch: switchItem ? !!switchItem.value : null, bright: brightItem ? brightItem.value : null };
 }
-
-async function setSwitch(value){
-  let res;
-  try{
-    res = await fetch(BRIDGE_URL + "?action=" + (value ? "on" : "off"));
-  }catch(networkErr){
-    throw new Error("[COMANDO/REDE] " + networkErr.message);
+async function setSwitch(value){ return bridgeGet("?action=" + (value ? "on" : "off")); }
+async function setBrightness(v1000){ return bridgeGet("?action=bright&value=" + Math.round(v1000)); }
+async function setColor(h){ return bridgeGet(`?action=color&h=${Math.round(h)}&s=1000&v=1000`); }
+async function setWhiteTemp(temp){ return bridgeGet("?action=white&temp=" + Math.round(temp)); }
+async function applyScene(scene){
+  if(scene.mode === 'colour'){
+    return bridgeGet(`?action=scene&mode=colour&h=${scene.h}&s=1000&v=1000`);
   }
-  const data = await res.json();
-  if(!data.success) throw new Error(`[COMANDO/TUYA] ${data.code || data.error || '?'}: ${data.msg || 'Falha ao enviar comando'}`);
-  return true;
+  return bridgeGet(`?action=scene&mode=white&temp=${scene.temp}&bright=${scene.bright}`);
 }
 
-async function setBrightness(value1000){
-  let res;
+function sceneLink(scene){
+  if(scene.mode === 'colour') return `${BRIDGE_URL}?action=scene&mode=colour&h=${scene.h}&s=1000&v=1000`;
+  return `${BRIDGE_URL}?action=scene&mode=white&temp=${scene.temp}&bright=${scene.bright}`;
+}
+
+/* ===================== Toast ===================== */
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._tm);
+  showToast._tm = setTimeout(()=> t.classList.remove('show'), 1800);
+}
+async function copyText(txt){
   try{
-    res = await fetch(BRIDGE_URL + "?action=bright&value=" + Math.round(value1000));
-  }catch(networkErr){
-    throw new Error("[BRILHO/REDE] " + networkErr.message);
+    await navigator.clipboard.writeText(txt);
+    showToast('Copiado!');
+  }catch(e){
+    showToast('Não consegui copiar automaticamente');
   }
-  const data = await res.json();
-  if(!data.success) throw new Error(`[BRILHO/TUYA] ${data.code || data.error || '?'}: ${data.msg || 'Falha ao ajustar brilho'}`);
-  return true;
 }
 
-async function setColor(h){
-  let res;
-  try{
-    res = await fetch(BRIDGE_URL + `?action=color&h=${Math.round(h)}&s=1000&v=1000`);
-  }catch(networkErr){
-    throw new Error("[COR/REDE] " + networkErr.message);
-  }
-  const data = await res.json();
-  if(!data.success) throw new Error(`[COR/TUYA] ${data.code || data.error || '?'}: ${data.msg || 'Falha ao ajustar cor'}`);
-  return true;
-}
+/* ===================== Navegação por abas ===================== */
+const tabButtons = document.querySelectorAll('.tab-btn');
+const views = { home: document.getElementById('view-home'), scenes: document.getElementById('view-scenes'),
+  routines: document.getElementById('view-routines'), settings: document.getElementById('view-settings') };
+tabButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    tabButtons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    Object.values(views).forEach(v => v.classList.remove('active'));
+    views[btn.dataset.view].classList.add('active');
+    if(btn.dataset.view === 'scenes' || btn.dataset.view === 'routines') renderScenes();
+    if(btn.dataset.view === 'settings') renderQuickLinks();
+  });
+});
 
-async function setWhiteTemp(temp){
-  let res;
-  try{
-    res = await fetch(BRIDGE_URL + "?action=white&temp=" + Math.round(temp));
-  }catch(networkErr){
-    throw new Error("[TEMP/REDE] " + networkErr.message);
-  }
-  const data = await res.json();
-  if(!data.success) throw new Error(`[TEMP/TUYA] ${data.code || data.error || '?'}: ${data.msg || 'Falha ao ajustar temperatura'}`);
-  return true;
-}
-
-/* ===================== UI ===================== */
+/* ===================== HOME: liga/desliga + status ===================== */
 const bulbBtn = document.getElementById('bulbBtn');
 const bulbIcon = document.getElementById('bulbIcon');
 const glow = document.getElementById('glow');
@@ -339,73 +457,43 @@ const statusText = document.getElementById('statusText');
 const hintText = document.getElementById('hintText');
 const btnOn = document.getElementById('btnOn');
 const btnOff = document.getElementById('btnOff');
-const bulbStage = document.getElementById('bulbStage');
-const ringFill = document.getElementById('ringFill');
-const ringHandle = document.getElementById('ringHandle');
-const brightLabel = document.getElementById('brightLabel');
 const swatchRow = document.getElementById('swatchRow');
-
-const RING_R = 130;
-const RING_CIRC = 2 * Math.PI * RING_R;
 
 let currentState = null;
 let busy = false;
 
-function renderState(state, opts={}){
+function renderState(state){
   currentState = state;
   if(state === true){
-    bulbBtn.classList.add('on');
-    glow.classList.add('on');
-    bulbIcon.setAttribute('stroke', '#ffcf7a');
-    bulbIcon.setAttribute('fill', 'rgba(255,180,84,.25)');
-    statusDot.className = 'dot on';
-    statusText.textContent = 'Acesa';
+    bulbBtn.classList.add('on'); glow.classList.add('on');
+    bulbIcon.setAttribute('stroke', '#ffcf7a'); bulbIcon.setAttribute('fill', 'rgba(255,180,84,.25)');
+    statusDot.className = 'dot on'; statusText.textContent = 'Acesa';
     btnOn.classList.add('active'); btnOff.classList.remove('active');
   } else if(state === false){
-    bulbBtn.classList.remove('on');
-    glow.classList.remove('on');
-    bulbIcon.setAttribute('stroke', '#8d87a3');
-    bulbIcon.setAttribute('fill', 'none');
-    statusDot.className = 'dot off';
-    statusText.textContent = 'Apagada';
+    bulbBtn.classList.remove('on'); glow.classList.remove('on');
+    bulbIcon.setAttribute('stroke', '#8d87a3'); bulbIcon.setAttribute('fill', 'none');
+    statusDot.className = 'dot off'; statusText.textContent = 'Apagada';
     btnOff.classList.add('active'); btnOn.classList.remove('active');
   } else {
-    statusDot.className = 'dot';
-    statusText.textContent = 'Estado desconhecido';
+    statusDot.className = 'dot'; statusText.textContent = 'Estado desconhecido';
   }
-  if(!opts.keepHint) hintText.textContent = '';
+  hintText.textContent = '';
 }
-
-function renderLoading(msg){
-  statusDot.className = 'dot';
-  statusText.innerHTML = `<span class="spinner"></span> ${msg}`;
-}
-
-function renderError(msg){
-  statusDot.className = 'dot err';
-  statusText.textContent = 'Erro';
-  hintText.textContent = msg;
-}
+function renderLoading(msg){ statusDot.className = 'dot'; statusText.innerHTML = `<span class="spinner"></span> ${msg}`; }
+function renderError(msg){ statusDot.className = 'dot err'; statusText.textContent = 'Erro'; hintText.textContent = msg; }
 
 async function toggle(forceValue){
   if(busy) return;
   busy = true;
   const target = typeof forceValue === 'boolean' ? forceValue : !currentState;
   renderLoading(target ? 'Acendendo…' : 'Apagando…');
-  try{
-    await setSwitch(target);
-    renderState(target);
-  }catch(e){
-    renderError(traduzErro(e.message));
-  }finally{
-    busy = false;
-  }
+  try{ await setSwitch(target); renderState(target); }
+  catch(e){ renderError(e.message); }
+  finally{ busy = false; }
 }
-
-function traduzErro(msg){
-  if(!msg) return 'Não foi possível falar com a lâmpada.';
-  return msg; // mostra o erro real e específico, com a etapa marcada entre colchetes
-}
+bulbBtn.addEventListener('click', () => toggle());
+btnOn.addEventListener('click', () => toggle(true));
+btnOff.addEventListener('click', () => toggle(false));
 
 async function refresh(){
   renderLoading('Consultando…');
@@ -413,134 +501,254 @@ async function refresh(){
     const st = await getStatus();
     renderState(st.switch);
     if(st.bright !== null) setRingPercent(Math.round((st.bright - 10) / 990 * 100));
-  }catch(e){
-    renderError(traduzErro(e.message));
-  }
+  }catch(e){ renderError(e.message); }
 }
-
-bulbBtn.addEventListener('click', () => toggle());
-btnOn.addEventListener('click', () => toggle(true));
-btnOff.addEventListener('click', () => toggle(false));
-
 refresh();
 
-/* ===================== Anel de brilho (arraste circular) ===================== */
-let ringDragging = false;
-let ringSendTimer = null;
+/* ===================== Anel de brilho (arco com folga no topo) ===================== */
+const bulbStage = document.getElementById('bulbStage');
+const ringTrack = document.getElementById('ringTrack');
+const ringFill = document.getElementById('ringFill');
+const ringHandle = document.getElementById('ringHandle');
+const brightLabel = document.getElementById('brightLabel');
+
+const CX = 150, CY = 150, R = 130;
+const GAP_DEG = 70;              // folga no topo (não fecha)
+const START_ANGLE = GAP_DEG / 2; // referência: 0° = topo, sentido horário
+const END_ANGLE = 360 - GAP_DEG / 2;
+const ARC_SPAN = END_ANGLE - START_ANGLE;
+
+function polar(angleDeg){
+  const rad = angleDeg * Math.PI / 180;
+  return { x: CX + R * Math.sin(rad), y: CY - R * Math.cos(rad) };
+}
+function describeArc(startAngle, endAngle){
+  const s = polar(startAngle), e = polar(endAngle);
+  const largeArc = (endAngle - startAngle) <= 180 ? "0" : "1";
+  return `M ${s.x} ${s.y} A ${R} ${R} 0 ${largeArc} 1 ${e.x} ${e.y}`;
+}
+ringTrack.setAttribute('d', describeArc(START_ANGLE, END_ANGLE));
 
 function setRingPercent(pct){
   pct = Math.max(0, Math.min(100, pct));
-  const offset = RING_CIRC * (1 - pct / 100);
-  ringFill.setAttribute('stroke-dashoffset', offset.toString());
-  const angle = (pct / 100) * 360 - 90; // -90 para iniciar no topo
-  const rad = angle * Math.PI / 180;
-  const cx = 140 + RING_R * Math.cos(rad);
-  const cy = 140 + RING_R * Math.sin(rad);
-  ringHandle.style.left = cx + 'px';
-  ringHandle.style.top = cy + 'px';
+  const angle = START_ANGLE + (pct/100) * ARC_SPAN;
+  ringFill.setAttribute('d', pct <= 0 ? '' : describeArc(START_ANGLE, angle));
+  const p = polar(angle);
+  ringHandle.style.left = p.x + 'px';
+  ringHandle.style.top = p.y + 'px';
   brightLabel.textContent = pct + '%';
 }
+setRingPercent(70);
 
-function angleToPercent(clientX, clientY){
+function angleFromPoint(clientX, clientY){
   const rect = bulbStage.getBoundingClientRect();
-  const cx = rect.left + rect.width / 2;
-  const cy = rect.top + rect.height / 2;
-  let angle = Math.atan2(clientY - cy, clientX - cx) * 180 / Math.PI + 90;
+  const cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
+  const dx = clientX - cx, dy = clientY - cy;
+  let angle = Math.atan2(dx, -dy) * 180 / Math.PI;
   if(angle < 0) angle += 360;
-  return Math.round((angle / 360) * 100);
+  return angle;
+}
+function clampToArc(angle){
+  if(angle < GAP_DEG/2) return START_ANGLE;
+  if(angle >= 360 - GAP_DEG/2) return END_ANGLE;
+  return angle;
 }
 
+let ringDragging = false, ringSendTimer = null;
 function sendBrightnessDebounced(pct){
   clearTimeout(ringSendTimer);
   ringSendTimer = setTimeout(async () => {
-    const value1000 = Math.round(10 + (pct / 100) * 990);
-    try{
-      renderLoading('Ajustando brilho…');
-      await setBrightness(value1000);
-      renderState(true, {keepHint:true});
-      hintText.textContent = '';
-    }catch(e){
-      renderError(traduzErro(e.message));
-    }
+    const value1000 = Math.round(10 + (pct/100) * 990);
+    try{ renderLoading('Ajustando brilho…'); await setBrightness(value1000); renderState(true); }
+    catch(e){ renderError(e.message); }
   }, 250);
 }
-
-function onRingStart(clientX, clientY){
-  ringDragging = true;
-  const pct = angleToPercent(clientX, clientY);
-  setRingPercent(pct);
-}
-function onRingMove(clientX, clientY){
-  if(!ringDragging) return;
-  const pct = angleToPercent(clientX, clientY);
+function handleRingPoint(clientX, clientY){
+  const angle = clampToArc(angleFromPoint(clientX, clientY));
+  const pct = Math.round((angle - START_ANGLE) / ARC_SPAN * 100);
   setRingPercent(pct);
   sendBrightnessDebounced(pct);
 }
-function onRingEnd(){
-  ringDragging = false;
-}
-
 bulbStage.addEventListener('pointerdown', (ev) => {
-  if(ev.target === bulbBtn || bulbBtn.contains(ev.target)) return; // não intercepta o toque no bulbo
+  if(ev.target === bulbBtn || bulbBtn.contains(ev.target)) return;
+  ringDragging = true;
   bulbStage.setPointerCapture(ev.pointerId);
-  onRingStart(ev.clientX, ev.clientY);
+  handleRingPoint(ev.clientX, ev.clientY);
 });
-bulbStage.addEventListener('pointermove', (ev) => onRingMove(ev.clientX, ev.clientY));
-bulbStage.addEventListener('pointerup', onRingEnd);
-bulbStage.addEventListener('pointercancel', onRingEnd);
+bulbStage.addEventListener('pointermove', (ev) => { if(ringDragging) handleRingPoint(ev.clientX, ev.clientY); });
+bulbStage.addEventListener('pointerup', () => ringDragging = false);
+bulbStage.addEventListener('pointercancel', () => ringDragging = false);
 
-/* ===================== Cores (swatches) ===================== */
+/* ===================== Swatches de cor ===================== */
 swatchRow.addEventListener('click', async (ev) => {
   const el = ev.target.closest('.swatch');
   if(!el) return;
   [...swatchRow.children].forEach(c => c.classList.remove('active'));
   el.classList.add('active');
-  const type = el.dataset.type;
   renderLoading('Aplicando cor…');
   try{
-    if(type === 'white'){
-      await setWhiteTemp(Number(el.dataset.temp));
-    } else {
-      await setColor(Number(el.dataset.h));
-    }
-    renderState(true, {keepHint:true});
-    hintText.textContent = '';
-  }catch(e){
-    renderError(traduzErro(e.message));
-  }
+    if(el.dataset.type === 'white') await setWhiteTemp(Number(el.dataset.temp));
+    else await setColor(Number(el.dataset.h));
+    renderState(true);
+  }catch(e){ renderError(e.message); }
 });
 
-/* ===================== Instalação PWA (iOS) ===================== */
-const isStandalone = window.navigator.standalone === true;
-const banner = document.getElementById('installBanner');
-const installModal = document.getElementById('installModal');
+/* ===================== Paleta de cores (modal) ===================== */
+const paletteModal = document.getElementById('paletteModal');
+const hueStrip = document.getElementById('hueStrip');
+const hueThumb = document.getElementById('hueThumb');
+const palettePreview = document.getElementById('palettePreview');
+let paletteHue = 240;
 
-if(!isStandalone && !localStorage.getItem('installDismissed')){
-  setTimeout(()=> banner.classList.add('show'), 900);
+function setHue(h){
+  paletteHue = Math.max(0, Math.min(360, h));
+  hueThumb.style.left = (paletteHue/360*100) + '%';
+  palettePreview.style.background = `hsl(${paletteHue},100%,50%)`;
 }
-document.getElementById('installBtn').addEventListener('click', ()=>{
-  installModal.classList.add('show');
+document.getElementById('openPalette').addEventListener('click', () => { paletteModal.classList.add('show'); });
+document.getElementById('paletteClose').addEventListener('click', () => paletteModal.classList.remove('show'));
+document.getElementById('paletteConfirm').addEventListener('click', async () => {
+  paletteModal.classList.remove('show');
+  renderLoading('Aplicando cor…');
+  try{ await setColor(paletteHue); renderState(true); }
+  catch(e){ renderError(e.message); }
 });
-document.getElementById('modalClose').addEventListener('click', ()=>{
-  installModal.classList.remove('show');
+let hueDragging = false;
+function hueFromEvent(clientX){
+  const rect = hueStrip.getBoundingClientRect();
+  const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+  setHue(pct * 360);
+}
+hueStrip.addEventListener('pointerdown', (ev) => { hueDragging = true; hueStrip.setPointerCapture(ev.pointerId); hueFromEvent(ev.clientX); });
+hueStrip.addEventListener('pointermove', (ev) => { if(hueDragging) hueFromEvent(ev.clientX); });
+hueStrip.addEventListener('pointerup', () => hueDragging = false);
+
+/* ===================== Cenas (localStorage) ===================== */
+function loadScenes(){ try{ return JSON.parse(localStorage.getItem('lampScenes') || '[]'); }catch(e){ return []; } }
+function saveScenes(list){ localStorage.setItem('lampScenes', JSON.stringify(list)); }
+
+const modeColorBtn = document.getElementById('modeColorBtn');
+const modeWhiteBtn = document.getElementById('modeWhiteBtn');
+const sceneColorBlock = document.getElementById('sceneColorBlock');
+const sceneWhiteBlock = document.getElementById('sceneWhiteBlock');
+let sceneMode = 'colour';
+modeColorBtn.addEventListener('click', () => {
+  sceneMode = 'colour'; modeColorBtn.classList.add('active'); modeWhiteBtn.classList.remove('active');
+  sceneColorBlock.style.display = ''; sceneWhiteBlock.style.display = 'none';
 });
-document.getElementById('installClose').addEventListener('click', ()=>{
-  banner.classList.remove('show');
-  localStorage.setItem('installDismissed','1');
+modeWhiteBtn.addEventListener('click', () => {
+  sceneMode = 'white'; modeWhiteBtn.classList.add('active'); modeColorBtn.classList.remove('active');
+  sceneWhiteBlock.style.display = ''; sceneColorBlock.style.display = 'none';
 });
 
-/* ===================== Manifest dinâmico (instalável) ===================== */
+document.getElementById('saveSceneBtn').addEventListener('click', () => {
+  const name = document.getElementById('sceneName').value.trim() || 'Cena sem nome';
+  const bright = Number(document.getElementById('sceneBright').value);
+  const scene = { id: Date.now(), name, mode: sceneMode, bright };
+  if(sceneMode === 'colour') scene.h = Number(document.getElementById('sceneHue').value);
+  else scene.temp = Number(document.getElementById('sceneTemp').value);
+  const list = loadScenes();
+  list.push(scene);
+  saveScenes(list);
+  document.getElementById('sceneName').value = '';
+  renderScenes();
+  showToast('Cena salva!');
+});
+
+function sceneColorPreview(scene){
+  if(scene.mode === 'colour') return `hsl(${scene.h},100%,50%)`;
+  const t = scene.temp / 1000;
+  return `hsl(${30 - t*30}, 80%, ${70 - t*10}%)`;
+}
+
+function renderScenes(){
+  const list = loadScenes();
+  const sceneListEl = document.getElementById('sceneList');
+  const routineListEl = document.getElementById('routineList');
+  const sceneEmpty = document.getElementById('sceneEmpty');
+  const routineEmpty = document.getElementById('routineEmpty');
+  sceneListEl.innerHTML = '';
+  routineListEl.innerHTML = '';
+  sceneEmpty.style.display = list.length ? 'none' : 'block';
+  routineEmpty.style.display = list.length ? 'none' : 'block';
+
+  list.forEach(scene => {
+    const desc = scene.mode === 'colour' ? `Cor · Brilho ${Math.round((scene.bright-10)/990*100)}%` : `Branco · Brilho ${Math.round((scene.bright-10)/990*100)}%`;
+    const cardHtml = `
+      <div class="card">
+        <div class="card-title"><span class="card-swatch" style="background:${sceneColorPreview(scene)}"></span>${scene.name}</div>
+        <div class="card-desc">${desc}</div>
+        <div class="card-actions">
+          <button class="btn-apply" data-apply="${scene.id}">Aplicar</button>
+          <button class="btn-copy" data-copy="${scene.id}">Copiar link</button>
+          <button class="btn-del" data-del="${scene.id}">Excluir</button>
+        </div>
+      </div>`;
+    sceneListEl.insertAdjacentHTML('beforeend', cardHtml);
+    routineListEl.insertAdjacentHTML('beforeend', cardHtml);
+  });
+
+  document.querySelectorAll('[data-apply]').forEach(b => b.addEventListener('click', async () => {
+    const scene = list.find(s => s.id == b.dataset.apply);
+    renderLoading('Aplicando cena…');
+    try{ await applyScene(scene); renderState(true); }
+    catch(e){ renderError(e.message); }
+  }));
+  document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => {
+    const scene = list.find(s => s.id == b.dataset.copy);
+    copyText(sceneLink(scene));
+  }));
+  document.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => {
+    const newList = loadScenes().filter(s => s.id != b.dataset.del);
+    saveScenes(newList);
+    renderScenes();
+  }));
+}
+
+/* ===================== Ajustes: links rápidos ===================== */
+function quickLinkList(){
+  return [
+    { name: 'Acender luz', url: `${BRIDGE_URL}?action=on` },
+    { name: 'Apagar luz', url: `${BRIDGE_URL}?action=off` },
+    { name: 'Luz quente', url: `${BRIDGE_URL}?action=white&temp=0` },
+    { name: 'Luz fria', url: `${BRIDGE_URL}?action=white&temp=1000` },
+    { name: 'Luz vermelha', url: `${BRIDGE_URL}?action=color&h=0&s=1000&v=1000` },
+    { name: 'Luz laranja', url: `${BRIDGE_URL}?action=color&h=30&s=1000&v=1000` },
+    { name: 'Luz amarela', url: `${BRIDGE_URL}?action=color&h=60&s=1000&v=1000` },
+    { name: 'Luz verde', url: `${BRIDGE_URL}?action=color&h=120&s=1000&v=1000` },
+    { name: 'Luz ciano', url: `${BRIDGE_URL}?action=color&h=190&s=1000&v=1000` },
+    { name: 'Luz azul', url: `${BRIDGE_URL}?action=color&h=240&s=1000&v=1000` },
+    { name: 'Luz roxa', url: `${BRIDGE_URL}?action=color&h=280&s=1000&v=1000` },
+    { name: 'Luz rosa', url: `${BRIDGE_URL}?action=color&h=320&s=1000&v=1000` },
+    { name: 'Brilho baixo', url: `${BRIDGE_URL}?action=bright&value=200` },
+    { name: 'Brilho médio', url: `${BRIDGE_URL}?action=bright&value=550` },
+    { name: 'Brilho alto', url: `${BRIDGE_URL}?action=bright&value=1000` },
+  ];
+}
+function renderQuickLinks(){
+  const box = document.getElementById('quickLinks');
+  box.innerHTML = '';
+  quickLinkList().forEach(item => {
+    box.insertAdjacentHTML('beforeend', `
+      <div class="link-row">
+        <span>${item.name}</span>
+        <button data-url="${item.url}">Copiar</button>
+      </div>`);
+  });
+  box.querySelectorAll('button[data-url]').forEach(b => b.addEventListener('click', () => copyText(b.dataset.url)));
+}
+document.getElementById('copyAllBtn').addEventListener('click', () => {
+  const txt = quickLinkList().map(i => `${i.name}: ${i.url}`).join('\n\n');
+  copyText(txt);
+});
+
+/* ===================== Instalação PWA / manifest ===================== */
 const manifest = {
-  name: "Acender Luz",
-  short_name: "Luz",
-  start_url: "./acender-luz.html",
-  display: "standalone",
-  background_color: "#0b0b14",
-  theme_color: "#0b0b14",
+  name: "Lâmpada", short_name: "Lâmpada", start_url: "./acender-luz.html",
+  display: "standalone", background_color: "#0b0b14", theme_color: "#0b0b14",
   icons: [{
     src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230b0b14'/%3E%3Ctext x='50' y='68' font-size='58' text-anchor='middle'%3E%F0%9F%92%A1%3C/text%3E%3C/svg%3E",
-    sizes: "192x192",
-    type: "image/svg+xml"
+    sizes: "192x192", type: "image/svg+xml"
   }]
 };
 const manifestBlob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
